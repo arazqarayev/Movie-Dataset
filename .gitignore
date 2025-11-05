@@ -1,106 +1,39 @@
 """
-Movies Dataset Analysis
------------------------
-This script performs a basic exploratory data analysis (EDA) on a movie dataset.
-It includes data cleaning, type conversion, missing value inspection,
-and correlation analysis between key numerical features.
-
+Movies EDA – Cleaning & Correlation
 Author: Araz Garayev
-Date: 2025-11-05
 """
 
-# === 1. Importing Libraries ===
+# 1) Libraries & Style
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib
 import matplotlib.pyplot as plt
 
-
-# Set global plot style
 plt.style.use('ggplot')
 matplotlib.rcParams['figure.figsize'] = (12, 8)
 
-# === 2. Load Dataset ===
+# 2) Load data
+# Not: Jupyter'deysen %matplotlib inline kullanabilirsin; .py dosyasında gerek yok.
 df = pd.read_csv(r'C:\Users\User\OneDrive\Desktop\data\movies.csv')
+print("First rows:\n", df.head(), "\n")
 
-#lets look data
-df.head()
-
-##data cleaning vs missing value
-
+# 3) Missing value report
 print("🔍 Missing Value Percentage by Column:")
 for col in df.columns:
     pct_missing = np.mean(df[col].isnull())
     print(f"{col} - {pct_missing:.2%}")
-    
-    ##birer birer sutunlardaki NA lari sildim, daha sonra 28% fazla na olan budgeti median ettim en mantikklisi.
-    
-    df = df.dropna(subset=['rating', 'gross', 'released' , 'score' , 'votes' , 'writer' , 'star' , 'company', 'runtime' , 'country'])
-    
-    #data type orgenmek istedim, numeric vs float mi veya kategorik?
-    
-    print(df['budget'].dtypes)
-    
-    ##Medyan (median) ile doldur
-    
-    df['budget'] = df['budget'].fillna(df['budget'].median())
-    print("\n📈 After Type Conversion:")
-    print(df.dtypes[['budget', 'gross']])
-    print(df.head(3), "\n")
-    df['year_correct'] = df['released'].astype(str).str.extract(r'(\d{4})')
-    df_sorted = df.sort_values(by='gross', ascending=False)
-    pd.set_option('display.max_rows', None)
-    unique_companies = df['company'].drop_duplicates().sort_values(ascending=False)
-    print("🏢 Number of unique production companies:", len(unique_companies))
-    top_companies = df['company'].value_counts().head(10)
-    sns.barplot(x=top_companies.values, y=top_companies.index)
-    plt.title('Top 10 Production Companies by Film Count')
-    plt.show()
-    
-    corr_matrix = df.corr(method='pearson', numeric_only=True)
-    print("\n📊 Pearson Correlation Matrix (Numeric Columns):")
-    print(corr_matrix)
-    sns.heatmap(corr_matrix, annot=True, cmap="coolwarm")
-    plt.title('Correlation Matrix for Numeric Features')
-    plt.xlabel('Movie Features')
-#lets look data
-df.head()
 
-##data cleaning vs missing value
+# 4) Drop rows with NaN in critical columns (keep dataset quality)
+critical_cols = ['rating','gross','released','score','votes','writer','star','company','runtime','country']
+df = df.dropna(subset=critical_cols)
 
-print("🔍 Missing Value Percentage by Column:")
-for col in df.columns:
-    pct_missing = np.mean(df[col].isnull())
-    print(f"{col} - {pct_missing:.2%}")
-    
-    ##birer birer sutunlardaki NA lari sildim, daha sonra 28% fazla na olan budgeti median ettim en mantikklisi.
-    
-    df = df.dropna(subset=['rating', 'gross', 'released' , 'score' , 'votes' , 'writer' , 'star' , 'company', 'runtime' , 'country'])
-    
-    #data type orgenmek istedim, numeric vs float mi veya kategorik?
-    
-    print(df['budget'].dtypes)
-    
-    ##Medyan (median) ile doldur
-    
-    df['budget'] = df['budget'].fillna(df['budget'].median())
-    print("\n📈 After Type Conversion:")
-    print(df.dtypes[['budget', 'gross']])
-    print(df.head(3), "\n")
-    df['year_correct'] = df['released'].astype(str).str.extract(r'(\d{4})')
-    df_sorted = df.sort_values(by='gross', ascending=False)
-    pd.set_option('display.max_rows', None)
-    unique_companies = df['company'].drop_duplicates().sort_values(ascending=False)
-    print("🏢 Number of unique production companies:", len(unique_companies))
-    top_companies = df['company'].value_counts().head(10)
-    sns.barplot(x=top_companies.values, y=top_companies.index)
-    plt.title('Top 10 Production Companies by Film Count')
-    plt.show()
-    
-    corr_matrix = df.corr(method='pearson', numeric_only=True)
-    print("\n📊 Pearson Correlation Matrix (Numeric Columns):")
-    print(corr_matrix)
-    sns.heatmap(corr_matrix, annot=True, cmap="coolwarm")
-    plt.title('Correlation Matrix for Numeric Features')
-    plt.xlabel('Movie Features')
+# 5) Budget: fill 26% missing with median (robust to outliers)
+print("\nBudget dtype before cleaning:", df['budget'].dtypes)
+# Eğer budget object ise sayıya çevir:
+df['budget'] = pd.to_numeric(df['budget'], errors='coerce')
+df['budget'] = df['budget'].fillna(df['budget'].median())
+
+print("\n📈 After Cleaning & Type Check (budget, gross):")
+print(df.dtypes[['budget', 'gross']])
+print
