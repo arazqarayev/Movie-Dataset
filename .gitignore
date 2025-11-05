@@ -1,39 +1,110 @@
-"""
-Movies EDA – Cleaning & Correlation
-Author: Araz Garayev
-"""
+# 🎬 MOVIE DATA ANALYSIS
+# Author: Araz Garayev
+# Description: This script performs basic data cleaning, exploration, and correlation analysis
+# on a movie dataset using Pandas, NumPy, Matplotlib, and Seaborn.
 
-# 1) Libraries & Style
+# -----------------------------
+# 1️⃣ Importing necessary libraries
+# -----------------------------
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib
 import matplotlib.pyplot as plt
-
 plt.style.use('ggplot')
+from matplotlib.pyplot import figure
+
+# %matplotlib inline (only needed in Jupyter Notebook to display plots inline)
 matplotlib.rcParams['figure.figsize'] = (12, 8)
 
-# 2) Load data
-# Not: Jupyter'deysen %matplotlib inline kullanabilirsin; .py dosyasında gerek yok.
+# -----------------------------
+# 2️⃣ Read dataset
+# -----------------------------
 df = pd.read_csv(r'C:\Users\User\OneDrive\Desktop\data\movies.csv')
-print("First rows:\n", df.head(), "\n")
 
-# 3) Missing value report
+# Display first few rows to confirm data loaded correctly
+df.head()
+
+# -----------------------------
+# 3️⃣ Data cleaning - Check for missing values
+# -----------------------------
 print("🔍 Missing Value Percentage by Column:")
 for col in df.columns:
     pct_missing = np.mean(df[col].isnull())
     print(f"{col} - {pct_missing:.2%}")
 
-# 4) Drop rows with NaN in critical columns (keep dataset quality)
-critical_cols = ['rating','gross','released','score','votes','writer','star','company','runtime','country']
-df = df.dropna(subset=critical_cols)
+# -----------------------------
+# 4️⃣ Remove rows with missing values in key columns
+# -----------------------------
+# These are critical columns for analysis, so rows missing them are dropped
+df = df.dropna(subset=['rating', 'gross', 'released', 'score', 
+                       'votes', 'writer', 'star', 'company', 
+                       'runtime', 'country'])
 
-# 5) Budget: fill 26% missing with median (robust to outliers)
-print("\nBudget dtype before cleaning:", df['budget'].dtypes)
-# Eğer budget object ise sayıya çevir:
-df['budget'] = pd.to_numeric(df['budget'], errors='coerce')
+# -----------------------------
+# 5️⃣ Check data types
+# -----------------------------
+# We check the data type of the 'budget' column to understand if it’s numeric or categorical
+print(df['budget'].dtypes)
+
+# -----------------------------
+# 6️⃣ Handle missing values in budget column
+# -----------------------------
+# Budget had around 28% missing data. Median was chosen as the best replacement (robust to outliers).
 df['budget'] = df['budget'].fillna(df['budget'].median())
 
-print("\n📈 After Cleaning & Type Check (budget, gross):")
+# Verify type conversion
+print("\n📈 After Type Conversion:")
 print(df.dtypes[['budget', 'gross']])
-print
+print(df.head(3), "\n")
+
+# -----------------------------
+# 7️⃣ Create a 'year_correct' column
+# -----------------------------
+# Extract the year from the 'released' column (the first 4 digits represent the year)
+df['year_correct'] = df['released'].astype(str).str.extract(r'(\d{4})')
+
+# -----------------------------
+# 8️⃣ Sort dataset by gross revenue (descending)
+# -----------------------------
+df_sorted = df.sort_values(by='gross', ascending=False)
+
+# Optional: Display all rows (use carefully for large datasets)
+pd.set_option('display.max_rows', None)
+
+# -----------------------------
+# 9️⃣ Unique production companies
+# -----------------------------
+unique_companies = df['company'].drop_duplicates().sort_values(ascending=False)
+print("🏢 Number of unique production companies:", len(unique_companies))
+
+# -----------------------------
+# 🔟 Top 10 production companies by film count
+# -----------------------------
+top_companies = df['company'].value_counts().head(10)
+
+# Visualize as a horizontal bar chart
+sns.barplot(x=top_companies.values, y=top_companies.index)
+plt.title('Top 10 Production Companies by Film Count')
+plt.xlabel('Number of Films')
+plt.ylabel('Production Company')
+plt.show()
+
+# -----------------------------
+# 11️⃣ Correlation analysis
+# -----------------------------
+# Calculate correlation matrix for numeric columns
+corr_matrix = df.corr(method='pearson', numeric_only=True)
+
+print("\n📊 Pearson Correlation Matrix (Numeric Columns):")
+print(corr_matrix)
+
+# -----------------------------
+# 12️⃣ Visualize correlation matrix
+# -----------------------------
+sns.heatmap(corr_matrix, annot=True, cmap="coolwarm")
+plt.title('Correlation Matrix for Numeric Features')
+plt.xlabel('Movie Features')
+plt.ylabel('Movie Features')
+plt.tight_layout()
+plt.show()
