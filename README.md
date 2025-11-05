@@ -20,7 +20,7 @@ Visualization: Creating heatmaps with matplotlib and seaborn
 
 📊 Technologies Used
 
-Python 3.x
+Python 
 
 Pandas – data manipulation
 
